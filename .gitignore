@@ -1,6 +1,18 @@
+# OS X files #
+.DS_Store
+
+# Project files #
 .classpath
 .project
 target
 node_modules
 .idea
 *.iml
+
+# Binary files #
+*.class
+
+# Package files #
+*.jar
+*.war
+*.ear
