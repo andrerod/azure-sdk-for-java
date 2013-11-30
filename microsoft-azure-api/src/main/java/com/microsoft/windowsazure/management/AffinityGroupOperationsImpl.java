@@ -21,15 +21,12 @@
 
 package com.microsoft.windowsazure.management;
 
+import com.microsoft.windowsazure.KeyStoreCredential;
 import com.microsoft.windowsazure.OperationResponse;
-import com.microsoft.windowsazure.management.AffinityGroupOperations;
-import com.microsoft.windowsazure.management.ManagementClientImpl;
+import com.microsoft.windowsazure.SSLContextFactory;
 import com.microsoft.windowsazure.management.models.AffinityGroupCreateParameters;
 import com.microsoft.windowsazure.management.models.AffinityGroupGetResponse;
-import com.microsoft.windowsazure.management.models.AffinityGroupGetResponse.HostedServiceReference;
-import com.microsoft.windowsazure.management.models.AffinityGroupGetResponse.StorageServiceReference;
 import com.microsoft.windowsazure.management.models.AffinityGroupListResponse;
-import com.microsoft.windowsazure.management.models.AffinityGroupListResponse.AffinityGroup;
 import com.microsoft.windowsazure.management.models.AffinityGroupUpdateParameters;
 import com.microsoft.windowsazure.services.core.CloudException;
 import com.microsoft.windowsazure.services.core.ServiceOperations;
@@ -44,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import javax.net.ssl.SSLContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -54,7 +52,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -568,6 +568,30 @@ public class AffinityGroupOperationsImpl implements ServiceOperations<Management
     @Override
     public AffinityGroupListResponse list() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, IOException, ParseException
     {
+        /*
+        CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
+        try {
+            httpclient.start();
+            
+            HttpHost proxy = new HttpHost("localhost", 8881);
+            RequestConfig config = RequestConfig.custom()
+                    .setProxy(proxy)
+                    .build();
+            
+            HttpGet request = new HttpGet("http://www.apache.org/");
+            request.setConfig(config);
+                        
+            Future<HttpResponse> future = httpclient.execute(request, null);
+            HttpResponse response = future.get();
+            System.out.println("Response: " + response.getStatusLine());
+            System.out.println("Shutting down");
+            
+            return null;
+        } finally {
+            httpclient.close();
+        }
+        */
+                
         // Validate
         
         // Tracing
@@ -575,12 +599,32 @@ public class AffinityGroupOperationsImpl implements ServiceOperations<Management
         // Construct URL
         String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/affinitygroups";
         
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
+        
+        CloseableHttpAsyncClient httpClient = null;
+        
+        try {
+            KeyStoreCredential keyStoreCredential = this.getClient().getCredentials().getKeyStoreCredential();
+            SSLContext sslcontext = SSLContextFactory.create(keyStoreCredential);
+
+            httpClient = HttpAsyncClients.custom()
+                .setSSLContext(sslcontext)
+                .build();
+        } catch (Exception e)
+        {
+            System.out.println(e.getMessage());
+        }
+
         try
         {
             httpClient.start();
             HttpGet httpRequest = new HttpGet(url);
+
+            HttpHost proxy = new HttpHost("localhost", 8881);
+            RequestConfig config = RequestConfig.custom()
+                    .setProxy(proxy)
+                    .build();
+
+            // httpRequest.setConfig(config);
             
             // Set Headers
             httpRequest.setHeader("x-ms-version", "2013-03-01");

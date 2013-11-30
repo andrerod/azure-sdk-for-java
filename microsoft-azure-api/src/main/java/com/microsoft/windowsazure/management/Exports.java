@@ -14,6 +14,8 @@
  */
 package com.microsoft.windowsazure.management;
 
+import com.microsoft.windowsazure.KeyStoreCredential;
+import com.microsoft.windowsazure.KeyStoreType;
 import static com.microsoft.windowsazure.services.core.utils.ExportUtils.*;
 
 import java.io.FileNotFoundException;
@@ -26,9 +28,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 
 import com.microsoft.windowsazure.services.core.Builder;
-import com.microsoft.windowsazure.services.management.implementation.KeyStoreCredential;
-import com.microsoft.windowsazure.services.management.implementation.KeyStoreType;
-import com.microsoft.windowsazure.services.management.implementation.SSLContextFactory;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 
@@ -46,6 +45,7 @@ public class Exports implements Builder.Exports {
         // provide contract implementation
         registry.add(ManagementClient.class, ManagementClientImpl.class);
 
+        /*
         // alter jersey client config for service management. 
         registry.alter(ManagementClient.class, ClientConfig.class, new Builder.Alteration<ClientConfig>() {
 
@@ -94,6 +94,6 @@ public class Exports implements Builder.Exports {
                 return clientConfig;
             }
         });
-
+*/
     }
 }

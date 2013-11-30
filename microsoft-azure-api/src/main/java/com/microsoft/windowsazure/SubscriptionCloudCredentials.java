@@ -23,4 +23,8 @@ public interface SubscriptionCloudCredentials {
     * the URI for every call that you make to the Service Management API.
     */
     public String getSubscriptionId();
+    
+    
+    // TODO: remove this
+    public KeyStoreCredential getKeyStoreCredential();
 }

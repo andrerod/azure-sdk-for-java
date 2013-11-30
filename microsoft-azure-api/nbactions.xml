@@ -24,9 +24,12 @@
                 <goal>surefire:test</goal>
             </goals>
             <properties>
+                
                 <Env.AZURE_SUBSCRIPTION_ID>279b0675-cf67-467f-98f0-67ae31eb540f</Env.AZURE_SUBSCRIPTION_ID>
-                <Env.KEYSTORE_PATH>azure-cert.jks</Env.KEYSTORE_PATH>
-                <Env.KEYSTORE_PASSWORD>AzureRocks!12</Env.KEYSTORE_PASSWORD>
+                <Env.AZURE_MANAGEMENT_KEYSTORE_PATH>/Users/andrerod/workspace/azure-sdk-for-java/azure-cert.jks</Env.AZURE_MANAGEMENT_KEYSTORE_PATH>
+                <Env.AZURE_MANAGEMENT_KEYSTORE_PASSWORD>AzureRocks!12</Env.AZURE_MANAGEMENT_KEYSTORE_PASSWORD>
+                
+                
                 <test>${packageClassName}</test>
                 <forkMode>once</forkMode>
                 <maven.surefire.debug>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address}</maven.surefire.debug>

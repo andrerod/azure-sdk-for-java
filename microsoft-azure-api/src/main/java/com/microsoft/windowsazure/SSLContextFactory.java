@@ -13,8 +13,9 @@
  * limitations under the License.
  */
 
-package com.microsoft.windowsazure.services.management.implementation;
+package com.microsoft.windowsazure;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +44,7 @@ public class SSLContextFactory {
      * @throws IOException
      *             when an I/O exception has occurred.
      */
-    public static SSLContext createSSLContext(KeyStoreCredential keyStoreCredential) throws GeneralSecurityException,
+    public static SSLContext create(KeyStoreCredential keyStoreCredential) throws GeneralSecurityException,
             IOException {
         if (keyStoreCredential == null) {
             throw new IllegalArgumentException("KeyStoreCredential cannot be null.");
@@ -78,7 +79,7 @@ public class SSLContextFactory {
             throw new IllegalArgumentException("The type of the keystore cannot be null");
         }
 
-        InputStream keyStoreInputStream = new FileInputStream(keyStorePath);
+        InputStream keyStoreInputStream = new FileInputStream(new File(keyStorePath));
         KeyManager[] keyManagers = getKeyManagers(keyStoreInputStream, keyStorePassword, keyStoreType);
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(keyManagers, null, new SecureRandom());
