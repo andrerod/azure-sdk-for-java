@@ -30,7 +30,6 @@ import com.microsoft.windowsazure.services.core.RFC1123DateConverter;
 import com.microsoft.windowsazure.services.core.ServiceFilter;
 import com.microsoft.windowsazure.services.core.UserAgentFilter;
 import com.microsoft.windowsazure.services.core.utils.pipeline.ClientFilterAdapter;
-import com.microsoft.windowsazure.services.core.utils.pipeline.PipelineHelpers;
 import com.microsoft.windowsazure.services.management.ManagementConfiguration;
 import com.microsoft.windowsazure.services.management.ManagementContract;
 import com.microsoft.windowsazure.services.management.models.AffinityGroupInfo;
@@ -175,7 +174,7 @@ public class ManagementRestProxy implements ManagementContract {
         ClientResponse clientResponse = getResource().path(subscriptionId).path("affinitygroups")
                 .header("x-ms-version", "2013-03-01").header("x-ms-client-request-id", UUID.randomUUID())
                 .get(ClientResponse.class);
-        PipelineHelpers.ThrowIfNotSuccess(clientResponse);
+        // PipelineHelpers.ThrowIfNotSuccess(clientResponse);
         String requestId = getRequestId(clientResponse);
         AffinityGroups affinityGroups = clientResponse.getEntity(AffinityGroups.class);
         List<AffinityGroupInfo> affinityGroupInfoList = AffinityGroupInfoListFactory.getItem(affinityGroups);
@@ -215,7 +214,7 @@ public class ManagementRestProxy implements ManagementContract {
     public GetAffinityGroupResult getAffinityGroup(String name) {
         ClientResponse clientResponse = getResource().path(subscriptionId).path("affinitygroups").path(name)
                 .header("x-ms-version", "2013-03-01").get(ClientResponse.class);
-        PipelineHelpers.ThrowIfError(clientResponse);
+        // PipelineHelpers.ThrowIfError(clientResponse);
         GetAffinityGroupResult getAffinityGroupResult = new GetAffinityGroupResult(clientResponse.getStatus(),
                 getRequestId(clientResponse));
         AffinityGroup affinityGroup = clientResponse.getEntity(AffinityGroup.class);
@@ -231,7 +230,7 @@ public class ManagementRestProxy implements ManagementContract {
     public DeleteAffinityGroupResult deleteAffinityGroup(String name) {
         ClientResponse clientResponse = getResource().path(subscriptionId).path("affinitygroups").path(name)
                 .header("x-ms-version", "2013-03-01").delete(ClientResponse.class);
-        PipelineHelpers.ThrowIfError(clientResponse);
+        // PipelineHelpers.ThrowIfError(clientResponse);
         DeleteAffinityGroupResult deleteAffinityGroupResult = new DeleteAffinityGroupResult(clientResponse.getStatus(),
                 getRequestId(clientResponse));
         return deleteAffinityGroupResult;
@@ -250,7 +249,7 @@ public class ManagementRestProxy implements ManagementContract {
         ClientResponse clientResponse = getResource().path(subscriptionId).path("affinitygroups")
                 .path(updateAffinityGroupOptions.getName()).header("x-ms-version", "2011-02-25")
                 .put(ClientResponse.class, updateAffinityGroup);
-        PipelineHelpers.ThrowIfError(clientResponse);
+        // PipelineHelpers.ThrowIfError(clientResponse);
         UpdateAffinityGroupResult updateAffinityGroupResult = new UpdateAffinityGroupResult(clientResponse.getStatus(),
                 getRequestId(clientResponse));
         MultivaluedMap<String, String> headers = clientResponse.getHeaders();

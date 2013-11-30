@@ -22,42 +22,16 @@
 package com.microsoft.windowsazure.management;
 
 import com.microsoft.windowsazure.OperationResponse;
-import com.microsoft.windowsazure.common.CloudException;
-import com.microsoft.windowsazure.common.ServiceOperations;
-import com.microsoft.windowsazure.management.ManagementClient;
 import com.microsoft.windowsazure.management.models.SubscriptionGetResponse;
 import com.microsoft.windowsazure.management.models.SubscriptionListOperationsParameters;
 import com.microsoft.windowsazure.management.models.SubscriptionListOperationsResponse;
-import com.microsoft.windowsazure.management.models.SubscriptionListOperationsResponse.OperationCallerDetails;
-import com.microsoft.windowsazure.management.models.SubscriptionListOperationsResponse.SubscriptionOperation;
-import com.microsoft.windowsazure.management.models.SubscriptionStatus;
+import com.microsoft.windowsazure.services.core.CloudException;
 import java.io.IOException;
-import java.lang.Boolean;
-import java.lang.Integer;
-import java.lang.InterruptedException;
-import java.lang.NullPointerException;
-import java.net.InetAddress;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.util.EntityUtils;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -65,25 +39,17 @@ import org.xml.sax.SAXException;
 * http://msdn.microsoft.com/en-us/library/windowsazure/gg715315.aspx for more
 * information)
 */
-public class SubscriptionOperations extends ServiceOperations<ManagementClient>
+public interface SubscriptionOperations
 {
     /**
-    * Initializes a new instance of the SubscriptionOperations class.
+    * The Get Subscription operation returns account and resource allocation
+    * information on the specified subscription.  (see
+    * http://msdn.microsoft.com/en-us/library/windowsazure/hh403995.aspx for
+    * more information)
     *
-    * @param client Reference to the service client.
+    * @return The Get Subscription operation response.
     */
-    SubscriptionOperations(ManagementClient client)
-    {
-        this.setClient(client);
-    }
-    
-    private ManagementClient _client;
-    
-    /**
-    * Gets a reference to the
-    * microsoft.windowsazure.management.ManagementClient.
-    */
-    public ManagementClient getClient() { return this._client; }
+    SubscriptionGetResponse get() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, URISyntaxException, ParseException;
     
     /**
     * The Get Subscription operation returns account and resource allocation
@@ -93,233 +59,7 @@ public class SubscriptionOperations extends ServiceOperations<ManagementClient>
     *
     * @return The Get Subscription operation response.
     */
-    public SubscriptionGetResponse get() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, URISyntaxException, ParseException, InterruptedException, ExecutionException
-    {
-        return this.getAsync().get();
-    }
-    
-    /**
-    * The Get Subscription operation returns account and resource allocation
-    * information on the specified subscription.  (see
-    * http://msdn.microsoft.com/en-us/library/windowsazure/hh403995.aspx for
-    * more information)
-    *
-    * @return The Get Subscription operation response.
-    */
-    public Future<SubscriptionGetResponse> getAsync() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, IOException
-    {
-        // Validate
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId();
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpGet httpRequest = new HttpGet(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            SubscriptionGetResponse result = new SubscriptionGetResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            // Deserialize Response
-            String responseContent = EntityUtils.toString(httpResponse.getEntity());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document responseDoc = documentBuilder.parse(responseContent);
-            
-            NodeList elements = responseDoc.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Subscription");
-            Element subscriptionElement = elements.getLength() > 0 ? ((Element)elements.item(0)) : null;
-            if (subscriptionElement != null)
-            {
-                NodeList elements2 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionID");
-                Element subscriptionIDElement = elements2.getLength() > 0 ? ((Element)elements2.item(0)) : null;
-                if (subscriptionIDElement != null)
-                {
-                    String subscriptionIDInstance;
-                    subscriptionIDInstance = subscriptionIDElement.getNodeValue();
-                    result.setSubscriptionID(subscriptionIDInstance);
-                }
-                
-                NodeList elements3 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionName");
-                Element subscriptionNameElement = elements3.getLength() > 0 ? ((Element)elements3.item(0)) : null;
-                if (subscriptionNameElement != null)
-                {
-                    String subscriptionNameInstance;
-                    subscriptionNameInstance = subscriptionNameElement.getNodeValue();
-                    result.setSubscriptionName(subscriptionNameInstance);
-                }
-                
-                NodeList elements4 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionStatus");
-                Element subscriptionStatusElement = elements4.getLength() > 0 ? ((Element)elements4.item(0)) : null;
-                if (subscriptionStatusElement != null)
-                {
-                    SubscriptionStatus subscriptionStatusInstance;
-                    subscriptionStatusInstance = SubscriptionStatus.valueOf(subscriptionStatusElement.getNodeValue());
-                    result.setSubscriptionStatus(subscriptionStatusInstance);
-                }
-                
-                NodeList elements5 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "AccountAdminLiveEmailId");
-                Element accountAdminLiveEmailIdElement = elements5.getLength() > 0 ? ((Element)elements5.item(0)) : null;
-                if (accountAdminLiveEmailIdElement != null)
-                {
-                    String accountAdminLiveEmailIdInstance;
-                    accountAdminLiveEmailIdInstance = accountAdminLiveEmailIdElement.getNodeValue();
-                    result.setAccountAdminLiveEmailId(accountAdminLiveEmailIdInstance);
-                }
-                
-                NodeList elements6 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "ServiceAdminLiveEmailId");
-                Element serviceAdminLiveEmailIdElement = elements6.getLength() > 0 ? ((Element)elements6.item(0)) : null;
-                if (serviceAdminLiveEmailIdElement != null)
-                {
-                    String serviceAdminLiveEmailIdInstance;
-                    serviceAdminLiveEmailIdInstance = serviceAdminLiveEmailIdElement.getNodeValue();
-                    result.setServiceAdminLiveEmailId(serviceAdminLiveEmailIdInstance);
-                }
-                
-                NodeList elements7 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "MaxCoreCount");
-                Element maxCoreCountElement = elements7.getLength() > 0 ? ((Element)elements7.item(0)) : null;
-                if (maxCoreCountElement != null)
-                {
-                    int maxCoreCountInstance;
-                    maxCoreCountInstance = Integer.parseInt(maxCoreCountElement.getNodeValue());
-                    result.setMaximumCoreCount(maxCoreCountInstance);
-                }
-                
-                NodeList elements8 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "MaxStorageAccounts");
-                Element maxStorageAccountsElement = elements8.getLength() > 0 ? ((Element)elements8.item(0)) : null;
-                if (maxStorageAccountsElement != null)
-                {
-                    int maxStorageAccountsInstance;
-                    maxStorageAccountsInstance = Integer.parseInt(maxStorageAccountsElement.getNodeValue());
-                    result.setMaximumStorageAccounts(maxStorageAccountsInstance);
-                }
-                
-                NodeList elements9 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "MaxHostedServices");
-                Element maxHostedServicesElement = elements9.getLength() > 0 ? ((Element)elements9.item(0)) : null;
-                if (maxHostedServicesElement != null)
-                {
-                    int maxHostedServicesInstance;
-                    maxHostedServicesInstance = Integer.parseInt(maxHostedServicesElement.getNodeValue());
-                    result.setMaximumHostedServices(maxHostedServicesInstance);
-                }
-                
-                NodeList elements10 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "CurrentCoreCount");
-                Element currentCoreCountElement = elements10.getLength() > 0 ? ((Element)elements10.item(0)) : null;
-                if (currentCoreCountElement != null)
-                {
-                    int currentCoreCountInstance;
-                    currentCoreCountInstance = Integer.parseInt(currentCoreCountElement.getNodeValue());
-                    result.setCurrentCoreCount(currentCoreCountInstance);
-                }
-                
-                NodeList elements11 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "CurrentStorageAccounts");
-                Element currentStorageAccountsElement = elements11.getLength() > 0 ? ((Element)elements11.item(0)) : null;
-                if (currentStorageAccountsElement != null)
-                {
-                    int currentStorageAccountsInstance;
-                    currentStorageAccountsInstance = Integer.parseInt(currentStorageAccountsElement.getNodeValue());
-                    result.setCurrentStorageAccounts(currentStorageAccountsInstance);
-                }
-                
-                NodeList elements12 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "CurrentHostedServices");
-                Element currentHostedServicesElement = elements12.getLength() > 0 ? ((Element)elements12.item(0)) : null;
-                if (currentHostedServicesElement != null)
-                {
-                    int currentHostedServicesInstance;
-                    currentHostedServicesInstance = Integer.parseInt(currentHostedServicesElement.getNodeValue());
-                    result.setCurrentHostedServices(currentHostedServicesInstance);
-                }
-                
-                NodeList elements13 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "MaxVirtualNetworkSites");
-                Element maxVirtualNetworkSitesElement = elements13.getLength() > 0 ? ((Element)elements13.item(0)) : null;
-                if (maxVirtualNetworkSitesElement != null)
-                {
-                    int maxVirtualNetworkSitesInstance;
-                    maxVirtualNetworkSitesInstance = Integer.parseInt(maxVirtualNetworkSitesElement.getNodeValue());
-                    result.setMaximumVirtualNetworkSites(maxVirtualNetworkSitesInstance);
-                }
-                
-                NodeList elements14 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "CurrentVirtualNetworkSites");
-                Element currentVirtualNetworkSitesElement = elements14.getLength() > 0 ? ((Element)elements14.item(0)) : null;
-                if (currentVirtualNetworkSitesElement != null)
-                {
-                    int currentVirtualNetworkSitesInstance;
-                    currentVirtualNetworkSitesInstance = Integer.parseInt(currentVirtualNetworkSitesElement.getNodeValue());
-                    result.setCurrentVirtualNetworkSites(currentVirtualNetworkSitesInstance);
-                }
-                
-                NodeList elements15 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "MaxLocalNetworkSites");
-                Element maxLocalNetworkSitesElement = elements15.getLength() > 0 ? ((Element)elements15.item(0)) : null;
-                if (maxLocalNetworkSitesElement != null)
-                {
-                    int maxLocalNetworkSitesInstance;
-                    maxLocalNetworkSitesInstance = Integer.parseInt(maxLocalNetworkSitesElement.getNodeValue());
-                    result.setMaximumLocalNetworkSites(maxLocalNetworkSitesInstance);
-                }
-                
-                NodeList elements16 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "MaxDnsServers");
-                Element maxDnsServersElement = elements16.getLength() > 0 ? ((Element)elements16.item(0)) : null;
-                if (maxDnsServersElement != null)
-                {
-                    int maxDnsServersInstance;
-                    maxDnsServersInstance = Integer.parseInt(maxDnsServersElement.getNodeValue());
-                    result.setMaximumDnsServers(maxDnsServersInstance);
-                }
-                
-                NodeList elements17 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "CurrentLocalNetworkSites");
-                Element currentLocalNetworkSitesElement = elements17.getLength() > 0 ? ((Element)elements17.item(0)) : null;
-                if (currentLocalNetworkSitesElement != null)
-                {
-                    int currentLocalNetworkSitesInstance;
-                    currentLocalNetworkSitesInstance = Integer.parseInt(currentLocalNetworkSitesElement.getNodeValue());
-                    result.setCurrentLocalNetworkSites(currentLocalNetworkSitesInstance);
-                }
-                
-                NodeList elements18 = subscriptionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "CurrentDnsServers");
-                Element currentDnsServersElement = elements18.getLength() > 0 ? ((Element)elements18.item(0)) : null;
-                if (currentDnsServersElement != null)
-                {
-                    int currentDnsServersInstance;
-                    currentDnsServersInstance = Integer.parseInt(currentDnsServersElement.getNodeValue());
-                    result.setCurrentDnsServers(currentDnsServersInstance);
-                }
-            }
-            
-            return new AsyncResult<SubscriptionGetResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<SubscriptionGetResponse> getAsync();
     
     /**
     * The List Subscription Operations operation returns a list of create,
@@ -332,10 +72,7 @@ public class SubscriptionOperations extends ServiceOperations<ManagementClient>
     * operation.
     * @return The List Subscription Operations operation response.
     */
-    public SubscriptionListOperationsResponse listOperations(SubscriptionListOperationsParameters parameters) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException
-    {
-        return this.listOperationsAsync(parameters).get();
-    }
+    SubscriptionListOperationsResponse listOperations(SubscriptionListOperationsParameters parameters) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException;
     
     /**
     * The List Subscription Operations operation returns a list of create,
@@ -348,229 +85,7 @@ public class SubscriptionOperations extends ServiceOperations<ManagementClient>
     * operation.
     * @return The List Subscription Operations operation response.
     */
-    public Future<SubscriptionListOperationsResponse> listOperationsAsync(SubscriptionListOperationsParameters parameters) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException, ParseException, IOException
-    {
-        // Validate
-        if (parameters == null)
-        {
-            throw new NullPointerException("parameters");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
-        simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
-        simpleDateFormat2.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/operations?";
-        url = url + "&StartTime=" + URLEncoder.encode(simpleDateFormat.format(parameters.getStartTime().getTime()));
-        url = url + "&EndTime=" + URLEncoder.encode(simpleDateFormat2.format(parameters.getEndTime().getTime()));
-        if (parameters.getObjectIdFilter() != null)
-        {
-            url = url + "&ObjectIdFilter=" + URLEncoder.encode(parameters.getObjectIdFilter());
-        }
-        if (parameters.getOperationStatus() != null)
-        {
-            url = url + "&OperationResultFilter=" + URLEncoder.encode(parameters.getOperationStatus().toString());
-        }
-        if (parameters.getContinuationToken() != null)
-        {
-            url = url + "&ContinuationToken=" + URLEncoder.encode(parameters.getContinuationToken());
-        }
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpGet httpRequest = new HttpGet(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            SubscriptionListOperationsResponse result = new SubscriptionListOperationsResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            // Deserialize Response
-            String responseContent = EntityUtils.toString(httpResponse.getEntity());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document responseDoc = documentBuilder.parse(responseContent);
-            
-            NodeList elements = responseDoc.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionOperationCollection");
-            Element subscriptionOperationCollectionElement = elements.getLength() > 0 ? ((Element)elements.item(0)) : null;
-            if (subscriptionOperationCollectionElement != null)
-            {
-                NodeList elements2 = subscriptionOperationCollectionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "ContinuationToken");
-                Element continuationTokenElement = elements2.getLength() > 0 ? ((Element)elements2.item(0)) : null;
-                if (continuationTokenElement != null)
-                {
-                    String continuationTokenInstance;
-                    continuationTokenInstance = continuationTokenElement.getNodeValue();
-                    result.setContinuationToken(continuationTokenInstance);
-                }
-                
-                NodeList elements3 = subscriptionOperationCollectionElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionOperations");
-                Element subscriptionOperationsSequenceElement = elements3.getLength() > 0 ? ((Element)elements3.item(0)) : null;
-                if (subscriptionOperationsSequenceElement != null)
-                {
-                    for (int i1 = 0; i1 < subscriptionOperationsSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionOperation").getLength(); i1 = i1 + 1)
-                    {
-                        org.w3c.dom.Element subscriptionOperationsElement = ((org.w3c.dom.Element)subscriptionOperationsSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionOperation").item(i1));
-                        SubscriptionListOperationsResponse.SubscriptionOperation subscriptionOperationInstance = new SubscriptionListOperationsResponse.SubscriptionOperation();
-                        result.getSubscriptionOperations().add(subscriptionOperationInstance);
-                        
-                        NodeList elements4 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationId");
-                        Element operationIdElement = elements4.getLength() > 0 ? ((Element)elements4.item(0)) : null;
-                        if (operationIdElement != null)
-                        {
-                            String operationIdInstance;
-                            operationIdInstance = operationIdElement.getNodeValue();
-                            subscriptionOperationInstance.setOperationId(operationIdInstance);
-                        }
-                        
-                        NodeList elements5 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationObjectId");
-                        Element operationObjectIdElement = elements5.getLength() > 0 ? ((Element)elements5.item(0)) : null;
-                        if (operationObjectIdElement != null)
-                        {
-                            String operationObjectIdInstance;
-                            operationObjectIdInstance = operationObjectIdElement.getNodeValue();
-                            subscriptionOperationInstance.setOperationObjectId(operationObjectIdInstance);
-                        }
-                        
-                        NodeList elements6 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationName");
-                        Element operationNameElement = elements6.getLength() > 0 ? ((Element)elements6.item(0)) : null;
-                        if (operationNameElement != null)
-                        {
-                            String operationNameInstance;
-                            operationNameInstance = operationNameElement.getNodeValue();
-                            subscriptionOperationInstance.setOperationName(operationNameInstance);
-                        }
-                        
-                        NodeList elements7 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationParameters");
-                        Element operationParametersSequenceElement = elements7.getLength() > 0 ? ((Element)elements7.item(0)) : null;
-                        if (operationParametersSequenceElement != null)
-                        {
-                            for (int i2 = 0; i2 < operationParametersSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationParameter").getLength(); i2 = i2 + 1)
-                            {
-                                org.w3c.dom.Element operationParametersElement = ((org.w3c.dom.Element)operationParametersSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationParameter").item(i2));
-                                NodeList elements8 = operationParametersElement.getElementsByTagNameNS("http://schemas.datacontract.org/2004/07/Microsoft.WindowsAzure.ServiceManagement", "Name");
-                                String operationParametersKey = elements8.getLength() > 0 ? ((org.w3c.dom.Element)elements8.item(0)).getNodeValue() : null;
-                                NodeList elements9 = operationParametersElement.getElementsByTagNameNS("http://schemas.datacontract.org/2004/07/Microsoft.WindowsAzure.ServiceManagement", "Value");
-                                String operationParametersValue = elements9.getLength() > 0 ? ((org.w3c.dom.Element)elements9.item(0)).getNodeValue() : null;
-                                subscriptionOperationInstance.getOperationParameters().put(operationParametersKey, operationParametersValue);
-                            }
-                        }
-                        
-                        NodeList elements10 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationCaller");
-                        Element operationCallerElement = elements10.getLength() > 0 ? ((Element)elements10.item(0)) : null;
-                        if (operationCallerElement != null)
-                        {
-                            SubscriptionListOperationsResponse.OperationCallerDetails operationCallerInstance = new SubscriptionListOperationsResponse.OperationCallerDetails();
-                            subscriptionOperationInstance.setOperationCaller(operationCallerInstance);
-                            
-                            NodeList elements11 = operationCallerElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "UsedServiceManagementApi");
-                            Element usedServiceManagementApiElement = elements11.getLength() > 0 ? ((Element)elements11.item(0)) : null;
-                            if (usedServiceManagementApiElement != null)
-                            {
-                                boolean usedServiceManagementApiInstance;
-                                usedServiceManagementApiInstance = Boolean.parseBoolean(usedServiceManagementApiElement.getNodeValue());
-                                operationCallerInstance.setUsedServiceManagementApi(usedServiceManagementApiInstance);
-                            }
-                            
-                            NodeList elements12 = operationCallerElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "UserEmailAddress");
-                            Element userEmailAddressElement = elements12.getLength() > 0 ? ((Element)elements12.item(0)) : null;
-                            if (userEmailAddressElement != null)
-                            {
-                                String userEmailAddressInstance;
-                                userEmailAddressInstance = userEmailAddressElement.getNodeValue();
-                                operationCallerInstance.setUserEmailAddress(userEmailAddressInstance);
-                            }
-                            
-                            NodeList elements13 = operationCallerElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificateThumbprint");
-                            Element subscriptionCertificateThumbprintElement = elements13.getLength() > 0 ? ((Element)elements13.item(0)) : null;
-                            if (subscriptionCertificateThumbprintElement != null)
-                            {
-                                String subscriptionCertificateThumbprintInstance;
-                                subscriptionCertificateThumbprintInstance = subscriptionCertificateThumbprintElement.getNodeValue();
-                                operationCallerInstance.setSubscriptionCertificateThumbprint(subscriptionCertificateThumbprintInstance);
-                            }
-                            
-                            NodeList elements14 = operationCallerElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "ClientIP");
-                            Element clientIPElement = elements14.getLength() > 0 ? ((Element)elements14.item(0)) : null;
-                            if (clientIPElement != null)
-                            {
-                                InetAddress clientIPInstance;
-                                clientIPInstance = InetAddress.getByName(clientIPElement.getNodeValue());
-                                operationCallerInstance.setClientIPAddress(clientIPInstance);
-                            }
-                        }
-                        
-                        NodeList elements15 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationStatus");
-                        Element operationStatusElement = elements15.getLength() > 0 ? ((Element)elements15.item(0)) : null;
-                        if (operationStatusElement != null)
-                        {
-                            String operationStatusInstance;
-                            operationStatusInstance = operationStatusElement.getNodeValue();
-                            subscriptionOperationInstance.setOperationStatus(operationStatusInstance);
-                        }
-                        
-                        NodeList elements16 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationStartedTime");
-                        Element operationStartedTimeElement = elements16.getLength() > 0 ? ((Element)elements16.item(0)) : null;
-                        if (operationStartedTimeElement != null)
-                        {
-                            Calendar operationStartedTimeInstance;
-                            SimpleDateFormat simpleDateFormat3 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
-                            Calendar calendar = Calendar.getInstance();
-                            calendar.setTime(simpleDateFormat3.parse(operationStartedTimeElement.getNodeValue()));
-                            operationStartedTimeInstance = calendar;
-                            subscriptionOperationInstance.setOperationStartedTime(operationStartedTimeInstance);
-                        }
-                        
-                        NodeList elements17 = subscriptionOperationsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "OperationCompletedTime");
-                        Element operationCompletedTimeElement = elements17.getLength() > 0 ? ((Element)elements17.item(0)) : null;
-                        if (operationCompletedTimeElement != null)
-                        {
-                            Calendar operationCompletedTimeInstance;
-                            SimpleDateFormat simpleDateFormat4 = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
-                            Calendar calendar2 = Calendar.getInstance();
-                            calendar2.setTime(simpleDateFormat4.parse(operationCompletedTimeElement.getNodeValue()));
-                            operationCompletedTimeInstance = calendar2;
-                            subscriptionOperationInstance.setOperationCompletedTime(operationCompletedTimeInstance);
-                        }
-                    }
-                }
-            }
-            
-            return new AsyncResult<SubscriptionListOperationsResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<SubscriptionListOperationsResponse> listOperationsAsync(SubscriptionListOperationsParameters parameters);
     
     /**
     * Register a resource with your subscription.
@@ -579,10 +94,7 @@ public class SubscriptionOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public OperationResponse registerResource(String resourceName) throws InterruptedException, ExecutionException, CloudException, IOException
-    {
-        return this.registerResourceAsync(resourceName).get();
-    }
+    OperationResponse registerResource(String resourceName) throws InterruptedException, ExecutionException, CloudException, IOException;
     
     /**
     * Register a resource with your subscription.
@@ -591,61 +103,7 @@ public class SubscriptionOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public Future<OperationResponse> registerResourceAsync(String resourceName) throws InterruptedException, ExecutionException, CloudException, IOException
-    {
-        // Validate
-        if (resourceName == null)
-        {
-            throw new NullPointerException("resourceName");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/services?service=" + resourceName + "&action=register";
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpPut httpRequest = new HttpPut(url);
-            
-            // Set Headers
-            httpRequest.setHeader("Content-Type", "application/xml");
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200 && statusCode != 202)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            OperationResponse result = new OperationResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            return new AsyncResult<OperationResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<OperationResponse> registerResourceAsync(String resourceName);
     
     /**
     * Unregister a resource with your subscription.
@@ -654,10 +112,7 @@ public class SubscriptionOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public OperationResponse unregisterResource(String resourceName) throws InterruptedException, ExecutionException, CloudException, IOException
-    {
-        return this.unregisterResourceAsync(resourceName).get();
-    }
+    OperationResponse unregisterResource(String resourceName) throws InterruptedException, ExecutionException, CloudException, IOException;
     
     /**
     * Unregister a resource with your subscription.
@@ -666,59 +121,5 @@ public class SubscriptionOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public Future<OperationResponse> unregisterResourceAsync(String resourceName) throws InterruptedException, ExecutionException, CloudException, IOException
-    {
-        // Validate
-        if (resourceName == null)
-        {
-            throw new NullPointerException("resourceName");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/services?service=" + resourceName + "&action=unregister";
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpPut httpRequest = new HttpPut(url);
-            
-            // Set Headers
-            httpRequest.setHeader("Content-Type", "application/xml");
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200 && statusCode != 202)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            OperationResponse result = new OperationResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            return new AsyncResult<OperationResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<OperationResponse> unregisterResourceAsync(String resourceName);
 }

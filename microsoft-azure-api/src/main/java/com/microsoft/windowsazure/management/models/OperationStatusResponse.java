@@ -24,7 +24,6 @@ package com.microsoft.windowsazure.management.models;
 import com.microsoft.windowsazure.OperationResponse;
 import com.microsoft.windowsazure.management.models.OperationStatus;
 import com.microsoft.windowsazure.management.models.OperationStatusResponse.ErrorDetails;
-import java.lang.Integer;
 
 /**
 * The response body contains the status of the specified asynchronous

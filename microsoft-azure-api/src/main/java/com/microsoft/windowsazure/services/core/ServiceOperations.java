@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-package com.microsoft.windowsazure;
+package com.microsoft.windowsazure.services.core;
 
-public interface SubscriptionCloudCredentials {
-    /*
-    * When you create a Windows Azure subscription, it is uniquely
-    * identified by a subscription ID. The subscription ID forms part of
-    * the URI for every call that you make to the Service Management API.
-    */
-    public String getSubscriptionId();
+public interface ServiceOperations<TClient> {
 }

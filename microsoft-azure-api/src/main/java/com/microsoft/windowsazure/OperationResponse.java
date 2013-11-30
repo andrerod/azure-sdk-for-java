@@ -18,10 +18,6 @@ package com.microsoft.windowsazure;
 
 import org.apache.http.HttpStatus;
 
-/**
- *
- * @author andrerod
- */
 public class OperationResponse {
     private int _httpStatusCode;
     

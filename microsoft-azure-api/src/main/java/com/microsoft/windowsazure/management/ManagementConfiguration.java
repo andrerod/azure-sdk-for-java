@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.microsoft.windowsazure.services.management;
+package com.microsoft.windowsazure.management;
 
+import com.microsoft.windowsazure.CertificateCloudCredentials;
 import com.microsoft.windowsazure.services.core.Configuration;
 
 /**
@@ -49,6 +50,8 @@ public class ManagementConfiguration {
      * Defines the subscription ID of the Windows Azure account.
      */
     public static final String SUBSCRIPTION_ID = "AZURE_SUBSCRIPTION_ID";
+    
+    public static final String SUBSCRIPTION_CLOUD_CREDENTIALS = "AZURE_SUBSCRIPTION_CLOUD_CREDENTIALS";
 
     /**
      * Creates a service management configuration using specified URI, and subscription ID.
@@ -97,8 +100,10 @@ public class ManagementConfiguration {
         configuration.setProperty(profile + SUBSCRIPTION_ID, subscriptionId);
         configuration.setProperty(profile + KEYSTORE_PATH, keyStoreLocation);
         configuration.setProperty(profile + KEYSTORE_PASSWORD, keyStorePassword);
-
+        
+        configuration.setProperty(profile + SUBSCRIPTION_CLOUD_CREDENTIALS,
+                new CertificateCloudCredentials(subscriptionId));
+        
         return configuration;
     }
-
 }

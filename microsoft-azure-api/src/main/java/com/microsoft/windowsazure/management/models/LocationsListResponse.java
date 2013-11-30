@@ -23,7 +23,6 @@ package com.microsoft.windowsazure.management.models;
 
 import com.microsoft.windowsazure.OperationResponse;
 import com.microsoft.windowsazure.management.models.LocationsListResponse.Location;
-import java.lang.Iterable;
 import java.util.ArrayList;
 import java.util.Iterator;
 

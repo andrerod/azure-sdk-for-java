@@ -23,7 +23,6 @@ package com.microsoft.windowsazure.management.models;
 
 import com.microsoft.windowsazure.OperationResponse;
 import com.microsoft.windowsazure.management.models.ManagementCertificateListResponse.SubscriptionCertificate;
-import java.lang.Iterable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;

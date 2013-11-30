@@ -22,46 +22,19 @@
 package com.microsoft.windowsazure.management;
 
 import com.microsoft.windowsazure.OperationResponse;
-import com.microsoft.windowsazure.common.CloudException;
-import com.microsoft.windowsazure.common.ServiceOperations;
-import com.microsoft.windowsazure.management.ManagementClient;
 import com.microsoft.windowsazure.management.models.ManagementCertificateCreateParameters;
 import com.microsoft.windowsazure.management.models.ManagementCertificateGetResponse;
 import com.microsoft.windowsazure.management.models.ManagementCertificateListResponse;
-import com.microsoft.windowsazure.management.models.ManagementCertificateListResponse.SubscriptionCertificate;
+import com.microsoft.windowsazure.services.core.CloudException;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.InterruptedException;
-import java.lang.NullPointerException;
 import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.util.EntityUtils;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -71,25 +44,22 @@ import org.xml.sax.SAXException;
 * http://msdn.microsoft.com/en-us/library/windowsazure/jj154124.aspx for more
 * information)
 */
-public class ManagementCertificateOperations extends ServiceOperations<ManagementClient>
+public interface ManagementCertificateOperations
 {
     /**
-    * Initializes a new instance of the ManagementCertificateOperations class.
+    * The Add Management Certificate operation adds a certificate to the list
+    * of management certificates. Management certificates, which are also
+    * known as subscription certificates, authenticate clients attempting to
+    * connect to resources associated with your Windows Azure subscription.
+    * (see http://msdn.microsoft.com/en-us/library/windowsazure/jj154123.aspx
+    * for more information)
     *
-    * @param client Reference to the service client.
+    * @param parameters Parameters supplied to the Create Management
+    * Certificate operation.
+    * @return A standard service response including an HTTP status code and
+    * request ID.
     */
-    ManagementCertificateOperations(ManagementClient client)
-    {
-        this.setClient(client);
-    }
-    
-    private ManagementClient _client;
-    
-    /**
-    * Gets a reference to the
-    * microsoft.windowsazure.management.ManagementClient.
-    */
-    public ManagementClient getClient() { return this._client; }
+    OperationResponse create(ManagementCertificateCreateParameters parameters) throws ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, InterruptedException, ExecutionException, CloudException, IOException;
     
     /**
     * The Add Management Certificate operation adds a certificate to the list
@@ -104,119 +74,7 @@ public class ManagementCertificateOperations extends ServiceOperations<Managemen
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public OperationResponse create(ManagementCertificateCreateParameters parameters) throws InterruptedException, ExecutionException, ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, CloudException, IOException, InterruptedException, ExecutionException
-    {
-        return this.createAsync(parameters).get();
-    }
-    
-    /**
-    * The Add Management Certificate operation adds a certificate to the list
-    * of management certificates. Management certificates, which are also
-    * known as subscription certificates, authenticate clients attempting to
-    * connect to resources associated with your Windows Azure subscription.
-    * (see http://msdn.microsoft.com/en-us/library/windowsazure/jj154123.aspx
-    * for more information)
-    *
-    * @param parameters Parameters supplied to the Create Management
-    * Certificate operation.
-    * @return A standard service response including an HTTP status code and
-    * request ID.
-    */
-    public Future<OperationResponse> createAsync(ManagementCertificateCreateParameters parameters) throws ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, InterruptedException, ExecutionException, CloudException, IOException
-    {
-        // Validate
-        if (parameters == null)
-        {
-            throw new NullPointerException("parameters");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/certificates";
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpPost httpRequest = new HttpPost(url);
-            
-            // Set Headers
-            httpRequest.setHeader("Content-Type", "application/xml");
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Serialize Request
-            String requestContent = null;
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document requestDoc = documentBuilder.newDocument();
-            
-            Element subscriptionCertificateElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificate");
-            requestDoc.appendChild(subscriptionCertificateElement);
-            
-            if (parameters.getPublicKey() != null)
-            {
-                Element subscriptionCertificatePublicKeyElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificatePublicKey");
-                subscriptionCertificatePublicKeyElement.appendChild(requestDoc.createTextNode(new String(Base64.encodeBase64(parameters.getPublicKey()))));
-                subscriptionCertificateElement.appendChild(subscriptionCertificatePublicKeyElement);
-            }
-            
-            if (parameters.getThumbprint() != null)
-            {
-                Element subscriptionCertificateThumbprintElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificateThumbprint");
-                subscriptionCertificateThumbprintElement.appendChild(requestDoc.createTextNode(parameters.getThumbprint()));
-                subscriptionCertificateElement.appendChild(subscriptionCertificateThumbprintElement);
-            }
-            
-            if (parameters.getData() != null)
-            {
-                Element subscriptionCertificateDataElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificateData");
-                subscriptionCertificateDataElement.appendChild(requestDoc.createTextNode(new String(Base64.encodeBase64(parameters.getData()))));
-                subscriptionCertificateElement.appendChild(subscriptionCertificateDataElement);
-            }
-            
-            DOMSource domSource = new DOMSource(requestDoc);
-            StreamResult streamResult = new StreamResult(new StringWriter());
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.transform(domSource, streamResult);
-            requestContent = requestDoc.toString();
-            StringEntity entity = new StringEntity(requestContent);
-            httpRequest.setEntity(entity);
-            httpRequest.setHeader("Content-Type", "application/xml");
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, requestContent, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            OperationResponse result = new OperationResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            return new AsyncResult<OperationResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<OperationResponse> createAsync(ManagementCertificateCreateParameters parameters);
     
     /**
     * The Delete Management Certificate operation deletes a certificate from
@@ -230,10 +88,7 @@ public class ManagementCertificateOperations extends ServiceOperations<Managemen
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public OperationResponse delete(String thumbprint) throws InterruptedException, ExecutionException, CloudException, IOException, InterruptedException, ExecutionException
-    {
-        return this.deleteAsync(thumbprint).get();
-    }
+    OperationResponse delete(String thumbprint) throws InterruptedException, ExecutionException, CloudException, IOException;
     
     /**
     * The Delete Management Certificate operation deletes a certificate from
@@ -247,60 +102,7 @@ public class ManagementCertificateOperations extends ServiceOperations<Managemen
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public Future<OperationResponse> deleteAsync(String thumbprint) throws InterruptedException, ExecutionException, CloudException, IOException
-    {
-        // Validate
-        if (thumbprint == null)
-        {
-            throw new NullPointerException("thumbprint");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/certificates/" + thumbprint;
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpDelete httpRequest = new HttpDelete(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200 && statusCode != 404)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            OperationResponse result = new OperationResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            return new AsyncResult<OperationResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<OperationResponse> deleteAsync(String thumbprint);
     
     /**
     * The Get Management Certificate operation retrieves information about the
@@ -315,10 +117,7 @@ public class ManagementCertificateOperations extends ServiceOperations<Managemen
     * information about.
     * @return The Get Management Certificate operation response.
     */
-    public ManagementCertificateGetResponse get(String thumbprint) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, URISyntaxException, InterruptedException, ExecutionException, ParseException
-    {
-        return this.getAsync(thumbprint).get();
-    }
+    ManagementCertificateGetResponse get(String thumbprint) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, URISyntaxException, ParseException;
     
     /**
     * The Get Management Certificate operation retrieves information about the
@@ -333,110 +132,7 @@ public class ManagementCertificateOperations extends ServiceOperations<Managemen
     * information about.
     * @return The Get Management Certificate operation response.
     */
-    public Future<ManagementCertificateGetResponse> getAsync(String thumbprint) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException, IOException
-    {
-        // Validate
-        if (thumbprint == null)
-        {
-            throw new NullPointerException("thumbprint");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/certificates/" + thumbprint;
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpGet httpRequest = new HttpGet(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            ManagementCertificateGetResponse result = new ManagementCertificateGetResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            // Deserialize Response
-            String responseContent = EntityUtils.toString(httpResponse.getEntity());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document responseDoc = documentBuilder.parse(responseContent);
-            
-            NodeList elements = responseDoc.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificate");
-            Element subscriptionCertificateElement = elements.getLength() > 0 ? ((Element)elements.item(0)) : null;
-            if (subscriptionCertificateElement != null)
-            {
-                NodeList elements2 = subscriptionCertificateElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificatePublicKey");
-                Element subscriptionCertificatePublicKeyElement = elements2.getLength() > 0 ? ((Element)elements2.item(0)) : null;
-                if (subscriptionCertificatePublicKeyElement != null)
-                {
-                    byte[] subscriptionCertificatePublicKeyInstance;
-                    subscriptionCertificatePublicKeyInstance = Base64.decodeBase64(subscriptionCertificatePublicKeyElement.getNodeValue().getBytes());
-                    result.setPublicKey(subscriptionCertificatePublicKeyInstance);
-                }
-                
-                NodeList elements3 = subscriptionCertificateElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificateThumbprint");
-                Element subscriptionCertificateThumbprintElement = elements3.getLength() > 0 ? ((Element)elements3.item(0)) : null;
-                if (subscriptionCertificateThumbprintElement != null)
-                {
-                    String subscriptionCertificateThumbprintInstance;
-                    subscriptionCertificateThumbprintInstance = subscriptionCertificateThumbprintElement.getNodeValue();
-                    result.setThumbprint(subscriptionCertificateThumbprintInstance);
-                }
-                
-                NodeList elements4 = subscriptionCertificateElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificateData");
-                Element subscriptionCertificateDataElement = elements4.getLength() > 0 ? ((Element)elements4.item(0)) : null;
-                if (subscriptionCertificateDataElement != null)
-                {
-                    byte[] subscriptionCertificateDataInstance;
-                    subscriptionCertificateDataInstance = Base64.decodeBase64(subscriptionCertificateDataElement.getNodeValue().getBytes());
-                    result.setData(subscriptionCertificateDataInstance);
-                }
-                
-                NodeList elements5 = subscriptionCertificateElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Created");
-                Element createdElement = elements5.getLength() > 0 ? ((Element)elements5.item(0)) : null;
-                if (createdElement != null)
-                {
-                    Calendar createdInstance;
-                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTime(simpleDateFormat.parse(createdElement.getNodeValue()));
-                    createdInstance = calendar;
-                    result.setCreated(createdInstance);
-                }
-            }
-            
-            return new AsyncResult<ManagementCertificateGetResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<ManagementCertificateGetResponse> getAsync(String thumbprint);
     
     /**
     * The List Management Certificates operation lists and returns basic
@@ -449,10 +145,7 @@ public class ManagementCertificateOperations extends ServiceOperations<Managemen
     *
     * @return The List Management Certificates operation response.
     */
-    public ManagementCertificateListResponse list() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, InterruptedException, ExecutionException, ParseException
-    {
-        return this.listAsync().get();
-    }
+    ManagementCertificateListResponse list() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException;
     
     /**
     * The List Management Certificates operation lists and returns basic
@@ -465,111 +158,5 @@ public class ManagementCertificateOperations extends ServiceOperations<Managemen
     *
     * @return The List Management Certificates operation response.
     */
-    public Future<ManagementCertificateListResponse> listAsync() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException, IOException
-    {
-        // Validate
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/certificates";
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpGet httpRequest = new HttpGet(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            ManagementCertificateListResponse result = new ManagementCertificateListResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            // Deserialize Response
-            String responseContent = EntityUtils.toString(httpResponse.getEntity());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document responseDoc = documentBuilder.parse(responseContent);
-            
-            NodeList elements = responseDoc.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificates");
-            Element subscriptionCertificatesSequenceElement = elements.getLength() > 0 ? ((Element)elements.item(0)) : null;
-            if (subscriptionCertificatesSequenceElement != null)
-            {
-                for (int i1 = 0; i1 < subscriptionCertificatesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificate").getLength(); i1 = i1 + 1)
-                {
-                    org.w3c.dom.Element subscriptionCertificatesElement = ((org.w3c.dom.Element)subscriptionCertificatesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificate").item(i1));
-                    ManagementCertificateListResponse.SubscriptionCertificate subscriptionCertificateInstance = new ManagementCertificateListResponse.SubscriptionCertificate();
-                    result.getSubscriptionCertificates().add(subscriptionCertificateInstance);
-                    
-                    NodeList elements2 = subscriptionCertificatesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificatePublicKey");
-                    Element subscriptionCertificatePublicKeyElement = elements2.getLength() > 0 ? ((Element)elements2.item(0)) : null;
-                    if (subscriptionCertificatePublicKeyElement != null)
-                    {
-                        byte[] subscriptionCertificatePublicKeyInstance;
-                        subscriptionCertificatePublicKeyInstance = Base64.decodeBase64(subscriptionCertificatePublicKeyElement.getNodeValue().getBytes());
-                        subscriptionCertificateInstance.setPublicKey(subscriptionCertificatePublicKeyInstance);
-                    }
-                    
-                    NodeList elements3 = subscriptionCertificatesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificateThumbprint");
-                    Element subscriptionCertificateThumbprintElement = elements3.getLength() > 0 ? ((Element)elements3.item(0)) : null;
-                    if (subscriptionCertificateThumbprintElement != null)
-                    {
-                        String subscriptionCertificateThumbprintInstance;
-                        subscriptionCertificateThumbprintInstance = subscriptionCertificateThumbprintElement.getNodeValue();
-                        subscriptionCertificateInstance.setThumbprint(subscriptionCertificateThumbprintInstance);
-                    }
-                    
-                    NodeList elements4 = subscriptionCertificatesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "SubscriptionCertificateData");
-                    Element subscriptionCertificateDataElement = elements4.getLength() > 0 ? ((Element)elements4.item(0)) : null;
-                    if (subscriptionCertificateDataElement != null)
-                    {
-                        byte[] subscriptionCertificateDataInstance;
-                        subscriptionCertificateDataInstance = Base64.decodeBase64(subscriptionCertificateDataElement.getNodeValue().getBytes());
-                        subscriptionCertificateInstance.setData(subscriptionCertificateDataInstance);
-                    }
-                    
-                    NodeList elements5 = subscriptionCertificatesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Created");
-                    Element createdElement = elements5.getLength() > 0 ? ((Element)elements5.item(0)) : null;
-                    if (createdElement != null)
-                    {
-                        Calendar createdInstance;
-                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
-                        Calendar calendar = Calendar.getInstance();
-                        calendar.setTime(simpleDateFormat.parse(createdElement.getNodeValue()));
-                        createdInstance = calendar;
-                        subscriptionCertificateInstance.setCreated(createdInstance);
-                    }
-                }
-            }
-            
-            return new AsyncResult<ManagementCertificateListResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<ManagementCertificateListResponse> listAsync();
 }

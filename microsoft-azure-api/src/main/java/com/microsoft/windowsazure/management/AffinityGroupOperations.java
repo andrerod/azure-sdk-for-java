@@ -22,50 +22,20 @@
 package com.microsoft.windowsazure.management;
 
 import com.microsoft.windowsazure.OperationResponse;
-import com.microsoft.windowsazure.common.CloudException;
-import com.microsoft.windowsazure.common.ServiceOperations;
-import com.microsoft.windowsazure.management.ManagementClient;
 import com.microsoft.windowsazure.management.models.AffinityGroupCreateParameters;
 import com.microsoft.windowsazure.management.models.AffinityGroupGetResponse;
-import com.microsoft.windowsazure.management.models.AffinityGroupGetResponse.HostedServiceReference;
-import com.microsoft.windowsazure.management.models.AffinityGroupGetResponse.StorageServiceReference;
 import com.microsoft.windowsazure.management.models.AffinityGroupListResponse;
-import com.microsoft.windowsazure.management.models.AffinityGroupListResponse.AffinityGroup;
 import com.microsoft.windowsazure.management.models.AffinityGroupUpdateParameters;
+import com.microsoft.windowsazure.services.core.CloudException;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.IllegalArgumentException;
-import java.lang.InterruptedException;
-import java.lang.NullPointerException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.util.EntityUtils;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -73,25 +43,20 @@ import org.xml.sax.SAXException;
 * http://msdn.microsoft.com/en-us/library/windowsazure/ee460798.aspx for more
 * information)
 */
-public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
+public interface AffinityGroupOperations
 {
     /**
-    * Initializes a new instance of the AffinityGroupOperations class.
+    * The Create Affinity Group operation creates a new affinity group for the
+    * specified subscription.  (see
+    * http://msdn.microsoft.com/en-us/library/windowsazure/gg715317.aspx for
+    * more information)
     *
-    * @param client Reference to the service client.
+    * @param parameters Parameters supplied to the Create Affinity Group
+    * operation.
+    * @return A standard service response including an HTTP status code and
+    * request ID.
     */
-    AffinityGroupOperations(ManagementClient client)
-    {
-        this.setClient(client);
-    }
-    
-    private ManagementClient _client;
-    
-    /**
-    * Gets a reference to the
-    * microsoft.windowsazure.management.ManagementClient.
-    */
-    public ManagementClient getClient() { return this._client; }
+    OperationResponse create(AffinityGroupCreateParameters parameters) throws ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, InterruptedException, ExecutionException, CloudException, IOException;
     
     /**
     * The Create Affinity Group operation creates a new affinity group for the
@@ -104,135 +69,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public OperationResponse create(AffinityGroupCreateParameters parameters) throws InterruptedException, ExecutionException, ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, CloudException, IOException
-    {
-        return this.createAsync(parameters).get();
-    }
-    
-    /**
-    * The Create Affinity Group operation creates a new affinity group for the
-    * specified subscription.  (see
-    * http://msdn.microsoft.com/en-us/library/windowsazure/gg715317.aspx for
-    * more information)
-    *
-    * @param parameters Parameters supplied to the Create Affinity Group
-    * operation.
-    * @return A standard service response including an HTTP status code and
-    * request ID.
-    */
-    public Future<OperationResponse> createAsync(AffinityGroupCreateParameters parameters) throws ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, InterruptedException, ExecutionException, CloudException, IOException
-    {
-        // Validate
-        if (parameters == null)
-        {
-            throw new NullPointerException("parameters");
-        }
-        if (parameters.getDescription() != null && parameters.getDescription().length() > 1024)
-        {
-            throw new IllegalArgumentException("parameters.Description");
-        }
-        if (parameters.getLabel() == null)
-        {
-            throw new NullPointerException("parameters.Label");
-        }
-        if (parameters.getLabel().length() > 100)
-        {
-            throw new IllegalArgumentException("parameters.Label");
-        }
-        if (parameters.getLocation() == null)
-        {
-            throw new NullPointerException("parameters.Location");
-        }
-        if (parameters.getName() == null)
-        {
-            throw new NullPointerException("parameters.Name");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/affinitygroups";
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpPost httpRequest = new HttpPost(url);
-            
-            // Set Headers
-            httpRequest.setHeader("Content-Type", "application/xml");
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Serialize Request
-            String requestContent = null;
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document requestDoc = documentBuilder.newDocument();
-            
-            Element createAffinityGroupElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "CreateAffinityGroup");
-            requestDoc.appendChild(createAffinityGroupElement);
-            
-            Element nameElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "Name");
-            nameElement.appendChild(requestDoc.createTextNode(parameters.getName()));
-            createAffinityGroupElement.appendChild(nameElement);
-            
-            Element labelElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "Label");
-            labelElement.appendChild(requestDoc.createTextNode(new String(Base64.encodeBase64(parameters.getLabel().getBytes()))));
-            createAffinityGroupElement.appendChild(labelElement);
-            
-            if (parameters.getDescription() != null)
-            {
-                Element descriptionElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "Description");
-                descriptionElement.appendChild(requestDoc.createTextNode(parameters.getDescription()));
-                createAffinityGroupElement.appendChild(descriptionElement);
-            }
-            
-            Element locationElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "Location");
-            locationElement.appendChild(requestDoc.createTextNode(parameters.getLocation()));
-            createAffinityGroupElement.appendChild(locationElement);
-            
-            DOMSource domSource = new DOMSource(requestDoc);
-            StreamResult streamResult = new StreamResult(new StringWriter());
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.transform(domSource, streamResult);
-            requestContent = requestDoc.toString();
-            StringEntity entity = new StringEntity(requestContent);
-            httpRequest.setEntity(entity);
-            httpRequest.setHeader("Content-Type", "application/xml");
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 201)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, requestContent, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            OperationResponse result = new OperationResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            return new AsyncResult<OperationResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<OperationResponse> createAsync(AffinityGroupCreateParameters parameters);
     
     /**
     * The Delete Affinity Group operation deletes an affinity group in the
@@ -244,10 +81,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public OperationResponse delete(String affinityGroupName) throws InterruptedException, ExecutionException, CloudException, IOException
-    {
-        return this.deleteAsync(affinityGroupName).get();
-    }
+    OperationResponse delete(String affinityGroupName) throws InterruptedException, ExecutionException, CloudException, IOException;
     
     /**
     * The Delete Affinity Group operation deletes an affinity group in the
@@ -259,60 +93,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public Future<OperationResponse> deleteAsync(String affinityGroupName) throws InterruptedException, ExecutionException, CloudException, IOException
-    {
-        // Validate
-        if (affinityGroupName == null)
-        {
-            throw new NullPointerException("affinityGroupName");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/affinitygroups/" + affinityGroupName;
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpDelete httpRequest = new HttpDelete(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            OperationResponse result = new OperationResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            return new AsyncResult<OperationResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<OperationResponse> deleteAsync(String affinityGroupName);
     
     /**
     * The Get Affinity Group Properties operation returns the system properties
@@ -324,10 +105,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     * returned by the name element of the List Affinity Groups operation.
     * @return The Get Affinity Group operation response.
     */
-    public AffinityGroupGetResponse get(String affinityGroupName) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, URISyntaxException, ParseException
-    {
-        return this.getAsync(affinityGroupName).get();
-    }
+    AffinityGroupGetResponse get(String affinityGroupName) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, URISyntaxException, ParseException;
     
     /**
     * The Get Affinity Group Properties operation returns the system properties
@@ -339,178 +117,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     * returned by the name element of the List Affinity Groups operation.
     * @return The Get Affinity Group operation response.
     */
-    public Future<AffinityGroupGetResponse> getAsync(String affinityGroupName) throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, URISyntaxException, URISyntaxException, IOException
-    {
-        // Validate
-        if (affinityGroupName == null)
-        {
-            throw new NullPointerException("affinityGroupName");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/affinitygroups/" + affinityGroupName;
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpGet httpRequest = new HttpGet(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            AffinityGroupGetResponse result = new AffinityGroupGetResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            // Deserialize Response
-            String responseContent = EntityUtils.toString(httpResponse.getEntity());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document responseDoc = documentBuilder.parse(responseContent);
-            
-            NodeList elements = responseDoc.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "AffinityGroup");
-            Element affinityGroupElement = elements.getLength() > 0 ? ((Element)elements.item(0)) : null;
-            if (affinityGroupElement != null)
-            {
-                NodeList elements2 = affinityGroupElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Name");
-                Element nameElement = elements2.getLength() > 0 ? ((Element)elements2.item(0)) : null;
-                if (nameElement != null)
-                {
-                    String nameInstance;
-                    nameInstance = nameElement.getNodeValue();
-                    result.setName(nameInstance);
-                }
-                
-                NodeList elements3 = affinityGroupElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Label");
-                Element labelElement = elements3.getLength() > 0 ? ((Element)elements3.item(0)) : null;
-                if (labelElement != null)
-                {
-                    String labelInstance;
-                    labelInstance = new String(Base64.decodeBase64(labelElement.getNodeValue().getBytes()));
-                    result.setLabel(labelInstance);
-                }
-                
-                NodeList elements4 = affinityGroupElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Description");
-                Element descriptionElement = elements4.getLength() > 0 ? ((Element)elements4.item(0)) : null;
-                if (descriptionElement != null)
-                {
-                    String descriptionInstance;
-                    descriptionInstance = descriptionElement.getNodeValue();
-                    result.setDescription(descriptionInstance);
-                }
-                
-                NodeList elements5 = affinityGroupElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Location");
-                Element locationElement = elements5.getLength() > 0 ? ((Element)elements5.item(0)) : null;
-                if (locationElement != null)
-                {
-                    String locationInstance;
-                    locationInstance = locationElement.getNodeValue();
-                    result.setLocation(locationInstance);
-                }
-                
-                NodeList elements6 = affinityGroupElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "HostedServices");
-                Element hostedServicesSequenceElement = elements6.getLength() > 0 ? ((Element)elements6.item(0)) : null;
-                if (hostedServicesSequenceElement != null)
-                {
-                    for (int i1 = 0; i1 < hostedServicesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "HostedService").getLength(); i1 = i1 + 1)
-                    {
-                        org.w3c.dom.Element hostedServicesElement = ((org.w3c.dom.Element)hostedServicesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "HostedService").item(i1));
-                        AffinityGroupGetResponse.HostedServiceReference hostedServiceInstance = new AffinityGroupGetResponse.HostedServiceReference();
-                        result.getHostedServices().add(hostedServiceInstance);
-                        
-                        NodeList elements7 = hostedServicesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Url");
-                        Element urlElement = elements7.getLength() > 0 ? ((Element)elements7.item(0)) : null;
-                        if (urlElement != null)
-                        {
-                            URI urlInstance;
-                            urlInstance = new URI(urlElement.getNodeValue());
-                            hostedServiceInstance.setUri(urlInstance);
-                        }
-                        
-                        NodeList elements8 = hostedServicesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "ServiceName");
-                        Element serviceNameElement = elements8.getLength() > 0 ? ((Element)elements8.item(0)) : null;
-                        if (serviceNameElement != null)
-                        {
-                            String serviceNameInstance;
-                            serviceNameInstance = serviceNameElement.getNodeValue();
-                            hostedServiceInstance.setServiceName(serviceNameInstance);
-                        }
-                    }
-                }
-                
-                NodeList elements9 = affinityGroupElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "StorageServices");
-                Element storageServicesSequenceElement = elements9.getLength() > 0 ? ((Element)elements9.item(0)) : null;
-                if (storageServicesSequenceElement != null)
-                {
-                    for (int i2 = 0; i2 < storageServicesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "StorageService").getLength(); i2 = i2 + 1)
-                    {
-                        org.w3c.dom.Element storageServicesElement = ((org.w3c.dom.Element)storageServicesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "StorageService").item(i2));
-                        AffinityGroupGetResponse.StorageServiceReference storageServiceInstance = new AffinityGroupGetResponse.StorageServiceReference();
-                        result.getStorageServices().add(storageServiceInstance);
-                        
-                        NodeList elements10 = storageServicesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Url");
-                        Element urlElement2 = elements10.getLength() > 0 ? ((Element)elements10.item(0)) : null;
-                        if (urlElement2 != null)
-                        {
-                            URI urlInstance2;
-                            urlInstance2 = new URI(urlElement2.getNodeValue());
-                            storageServiceInstance.setUri(urlInstance2);
-                        }
-                        
-                        NodeList elements11 = storageServicesElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "ServiceName");
-                        Element serviceNameElement2 = elements11.getLength() > 0 ? ((Element)elements11.item(0)) : null;
-                        if (serviceNameElement2 != null)
-                        {
-                            String serviceNameInstance2;
-                            serviceNameInstance2 = serviceNameElement2.getNodeValue();
-                            storageServiceInstance.setServiceName(serviceNameInstance2);
-                        }
-                    }
-                }
-                
-                NodeList elements12 = affinityGroupElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Capabilities");
-                Element capabilitiesSequenceElement = elements12.getLength() > 0 ? ((Element)elements12.item(0)) : null;
-                if (capabilitiesSequenceElement != null)
-                {
-                    for (int i3 = 0; i3 < capabilitiesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Capability").getLength(); i3 = i3 + 1)
-                    {
-                        org.w3c.dom.Element capabilitiesElement = ((org.w3c.dom.Element)capabilitiesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Capability").item(i3));
-                        result.getCapabilities().add(capabilitiesElement.getNodeValue());
-                    }
-                }
-            }
-            
-            return new AsyncResult<AffinityGroupGetResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<AffinityGroupGetResponse> getAsync(String affinityGroupName);
     
     /**
     * The List Affinity Groups operation lists the affinity groups associated
@@ -520,10 +127,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     *
     * @return The List Affinity Groups operation response.
     */
-    public AffinityGroupListResponse list() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException
-    {
-        return this.listAsync().get();
-    }
+    AffinityGroupListResponse list() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, ParseException;
     
     /**
     * The List Affinity Groups operation lists the affinity groups associated
@@ -533,121 +137,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     *
     * @return The List Affinity Groups operation response.
     */
-    public Future<AffinityGroupListResponse> listAsync() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, IOException
-    {
-        // Validate
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/affinitygroups";
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpGet httpRequest = new HttpGet(url);
-            
-            // Set Headers
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, null, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            AffinityGroupListResponse result = new AffinityGroupListResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            // Deserialize Response
-            String responseContent = EntityUtils.toString(httpResponse.getEntity());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document responseDoc = documentBuilder.parse(responseContent);
-            
-            NodeList elements = responseDoc.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "AffinityGroups");
-            Element affinityGroupsSequenceElement = elements.getLength() > 0 ? ((Element)elements.item(0)) : null;
-            if (affinityGroupsSequenceElement != null)
-            {
-                for (int i1 = 0; i1 < affinityGroupsSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "AffinityGroup").getLength(); i1 = i1 + 1)
-                {
-                    org.w3c.dom.Element affinityGroupsElement = ((org.w3c.dom.Element)affinityGroupsSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "AffinityGroup").item(i1));
-                    AffinityGroupListResponse.AffinityGroup affinityGroupInstance = new AffinityGroupListResponse.AffinityGroup();
-                    result.getAffinityGroups().add(affinityGroupInstance);
-                    
-                    NodeList elements2 = affinityGroupsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Name");
-                    Element nameElement = elements2.getLength() > 0 ? ((Element)elements2.item(0)) : null;
-                    if (nameElement != null)
-                    {
-                        String nameInstance;
-                        nameInstance = nameElement.getNodeValue();
-                        affinityGroupInstance.setName(nameInstance);
-                    }
-                    
-                    NodeList elements3 = affinityGroupsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Label");
-                    Element labelElement = elements3.getLength() > 0 ? ((Element)elements3.item(0)) : null;
-                    if (labelElement != null)
-                    {
-                        String labelInstance;
-                        labelInstance = new String(Base64.decodeBase64(labelElement.getNodeValue().getBytes()));
-                        affinityGroupInstance.setLabel(labelInstance);
-                    }
-                    
-                    NodeList elements4 = affinityGroupsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Description");
-                    Element descriptionElement = elements4.getLength() > 0 ? ((Element)elements4.item(0)) : null;
-                    if (descriptionElement != null)
-                    {
-                        String descriptionInstance;
-                        descriptionInstance = descriptionElement.getNodeValue();
-                        affinityGroupInstance.setDescription(descriptionInstance);
-                    }
-                    
-                    NodeList elements5 = affinityGroupsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Location");
-                    Element locationElement = elements5.getLength() > 0 ? ((Element)elements5.item(0)) : null;
-                    if (locationElement != null)
-                    {
-                        String locationInstance;
-                        locationInstance = locationElement.getNodeValue();
-                        affinityGroupInstance.setLocation(locationInstance);
-                    }
-                    
-                    NodeList elements6 = affinityGroupsElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Capabilities");
-                    Element capabilitiesSequenceElement = elements6.getLength() > 0 ? ((Element)elements6.item(0)) : null;
-                    if (capabilitiesSequenceElement != null)
-                    {
-                        for (int i2 = 0; i2 < capabilitiesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Capability").getLength(); i2 = i2 + 1)
-                        {
-                            org.w3c.dom.Element capabilitiesElement = ((org.w3c.dom.Element)capabilitiesSequenceElement.getElementsByTagNameNS("http://schemas.microsoft.com/windowsazure", "Capability").item(i2));
-                            affinityGroupInstance.getCapabilities().add(capabilitiesElement.getNodeValue());
-                        }
-                    }
-                }
-            }
-            
-            return new AsyncResult<AffinityGroupListResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<AffinityGroupListResponse> listAsync();
     
     /**
     * The Update Affinity Group operation updates the label and/or the
@@ -661,10 +151,7 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public OperationResponse update(String affinityGroupName, AffinityGroupUpdateParameters parameters) throws InterruptedException, ExecutionException, ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, CloudException, IOException
-    {
-        return this.updateAsync(affinityGroupName, parameters).get();
-    }
+    OperationResponse update(String affinityGroupName, AffinityGroupUpdateParameters parameters) throws ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, InterruptedException, ExecutionException, CloudException, IOException;
     
     /**
     * The Update Affinity Group operation updates the label and/or the
@@ -678,105 +165,5 @@ public class AffinityGroupOperations extends ServiceOperations<ManagementClient>
     * @return A standard service response including an HTTP status code and
     * request ID.
     */
-    public Future<OperationResponse> updateAsync(String affinityGroupName, AffinityGroupUpdateParameters parameters) throws ParserConfigurationException, SAXException, TransformerConfigurationException, TransformerException, UnsupportedEncodingException, InterruptedException, ExecutionException, CloudException, IOException
-    {
-        // Validate
-        if (affinityGroupName == null)
-        {
-            throw new NullPointerException("affinityGroupName");
-        }
-        if (parameters == null)
-        {
-            throw new NullPointerException("parameters");
-        }
-        if (parameters.getDescription() != null && parameters.getDescription().length() > 1024)
-        {
-            throw new IllegalArgumentException("parameters.Description");
-        }
-        if (parameters.getLabel() == null)
-        {
-            throw new NullPointerException("parameters.Label");
-        }
-        if (parameters.getLabel().length() > 100)
-        {
-            throw new IllegalArgumentException("parameters.Label");
-        }
-        
-        // Tracing
-        
-        // Construct URL
-        String url = this.getClient().getBaseUri() + "/" + this.getClient().getCredentials().getSubscriptionId() + "/affinitygroups/" + affinityGroupName;
-        
-        // Create HTTP transport objects
-        CloseableHttpAsyncClient httpClient = HttpAsyncClients.createDefault();
-        try
-        {
-            httpClient.start();
-            HttpPut httpRequest = new HttpPut(url);
-            
-            // Set Headers
-            httpRequest.setHeader("Content-Type", "application/xml");
-            httpRequest.setHeader("x-ms-version", "2013-03-01");
-            
-            // Set Credentials
-            
-            // Serialize Request
-            String requestContent = null;
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            Document requestDoc = documentBuilder.newDocument();
-            
-            Element updateAffinityGroupElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "UpdateAffinityGroup");
-            requestDoc.appendChild(updateAffinityGroupElement);
-            
-            Element labelElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "Label");
-            labelElement.appendChild(requestDoc.createTextNode(new String(Base64.encodeBase64(parameters.getLabel().getBytes()))));
-            updateAffinityGroupElement.appendChild(labelElement);
-            
-            if (parameters.getDescription() != null)
-            {
-                Element descriptionElement = requestDoc.createElementNS("http://schemas.microsoft.com/windowsazure", "Description");
-                descriptionElement.appendChild(requestDoc.createTextNode(parameters.getDescription()));
-                updateAffinityGroupElement.appendChild(descriptionElement);
-            }
-            
-            DOMSource domSource = new DOMSource(requestDoc);
-            StreamResult streamResult = new StreamResult(new StringWriter());
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.transform(domSource, streamResult);
-            requestContent = requestDoc.toString();
-            StringEntity entity = new StringEntity(requestContent);
-            httpRequest.setEntity(entity);
-            httpRequest.setHeader("Content-Type", "application/xml");
-            
-            // Send Request
-            HttpResponse httpResponse = null;
-            Future<HttpResponse> httpRequestFuture = httpClient.execute(httpRequest, null);
-            httpResponse = httpRequestFuture.get();
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode != 200)
-            {
-                CloudException ex = CloudException.createFromXml(httpRequest, requestContent, httpResponse, EntityUtils.toString(httpResponse.getEntity()));
-                throw ex;
-            }
-            
-            // Create Result
-            OperationResponse result = new OperationResponse();
-            result.setStatusCode(statusCode);
-            if (httpResponse.getHeaders("x-ms-request-id").length > 0)
-            {
-                result.setRequestId(httpResponse.getFirstHeader("x-ms-request-id").getValue());
-            }
-            
-            return new AsyncResult<OperationResponse>(result);
-        }
-        finally
-        {
-            if (httpClient != null)
-            {
-                httpClient.close();
-            }
-        }
-    }
+    Future<OperationResponse> updateAsync(String affinityGroupName, AffinityGroupUpdateParameters parameters);
 }
