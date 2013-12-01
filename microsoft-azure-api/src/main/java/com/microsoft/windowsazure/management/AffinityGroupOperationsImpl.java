@@ -30,18 +30,24 @@ import com.microsoft.windowsazure.management.models.AffinityGroupListResponse;
 import com.microsoft.windowsazure.management.models.AffinityGroupUpdateParameters;
 import com.microsoft.windowsazure.services.core.CloudException;
 import com.microsoft.windowsazure.services.core.ServiceOperations;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.ParseException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -52,16 +58,20 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpHost;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
+import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -557,6 +567,54 @@ public class AffinityGroupOperationsImpl implements ServiceOperations<Management
          });
     }
     
+    private SSLSocketFactory getSSLSocketFactory() throws Exception {
+        KeyStoreCredential keyStoreCredential = this.getClient().getCredentials().getKeyStoreCredential();
+        SSLContext sslcontext = SSLContextFactory.create(keyStoreCredential);
+        return sslcontext.getSocketFactory();
+    }
+    
+    private String processGetRequest(URL url) throws Exception {
+        SSLSocketFactory sslFactory = getSSLSocketFactory();
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        con.setSSLSocketFactory(sslFactory);
+        con.setRequestMethod("GET");
+        con.addRequestProperty("x-ms-version", "2012-03-01");
+        InputStream responseStream = (InputStream) con.getContent();
+        String response = getStringFromInputStream(responseStream);
+        responseStream.close();
+        return response;
+    }
+    
+    // Source - http://www.mkyong.com/java/how-to-convert-inputstream-to-string-in-java/
+    private static String getStringFromInputStream(InputStream is) {
+          
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+  
+        String line;
+        try {
+  
+            br = new BufferedReader(new InputStreamReader(is));
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+  
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+  
+        return sb.toString();
+  
+    }
+    
     /**
     * The List Affinity Groups operation lists the affinity groups associated
     * with the specified subscription.  (see
@@ -569,29 +627,90 @@ public class AffinityGroupOperationsImpl implements ServiceOperations<Management
     public AffinityGroupListResponse list() throws InterruptedException, ExecutionException, CloudException, ParserConfigurationException, SAXException, IOException, IOException, ParseException
     {
         /*
-        CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
+        // isto funciona
+        try
+        {
+            processGetRequest(new URL("https://management.core.windows.net/db1ab6f0-4769-4b27-930e-01e2ef9c123c/services/WebSpaces"));
+        }
+        catch (Exception e)
+        {
+            System.out.println("hi");
+        }
+        
+        return null;
+*/
+
+        CloseableHttpClient httpclient = null;
+        
+        try {
+            KeyStoreCredential keyStoreCredential = this.getClient().getCredentials().getKeyStoreCredential();
+            SSLContext sslcontext = SSLContextFactory.create(keyStoreCredential);
+            
+
+            // Allow TLSv1 protocol only
+            SSLIOSessionStrategy sslSessionStrategy = new SSLIOSessionStrategy(sslcontext);
+
+            SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslcontext,
+                SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+            httpclient = HttpClients.custom()
+                .setSSLSocketFactory(sslsf)
+                .build();
+            
+            HttpGet request = new HttpGet("https://management.core.windows.net/db1ab6f0-4769-4b27-930e-01e2ef9c123c/services/WebSpaces");
+            request.setHeader("x-ms-version", "2013-08-01");
+
+            CloseableHttpResponse response = httpclient.execute(request);
+            try {
+                HttpEntity entity = response.getEntity();
+
+                System.out.println("----------------------------------------");
+                System.out.println(response.getStatusLine());
+                if (entity != null) {
+                    System.out.println("Response content length: " + entity.getContentLength());
+                }
+                String responseContent = EntityUtils.toString(response.getEntity());
+                
+                System.out.println("ola");
+            } finally {
+                response.close();
+            }
+            
+            /*
+            httpclient = HttpAsyncClients.custom()
+                .setSSLStrategy(sslSessionStrategy)
+                //.setSSLContext(sslcontext)
+                .build();
+            */
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        
+        return null;
+                    
+        /*
+        // CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
         try {
             httpclient.start();
-            
-            HttpHost proxy = new HttpHost("localhost", 8881);
-            RequestConfig config = RequestConfig.custom()
-                    .setProxy(proxy)
-                    .build();
-            
-            HttpGet request = new HttpGet("http://www.apache.org/");
-            request.setConfig(config);
-                        
+
+            HttpGet request = new HttpGet("https://management.core.windows.net/db1ab6f0-4769-4b27-930e-01e2ef9c123c/services/WebSpaces");
+            request.setHeader("x-ms-version", "2013-08-01");
+
+            // request.setConfig(config);
+
             Future<HttpResponse> future = httpclient.execute(request, null);
             HttpResponse response = future.get();
             System.out.println("Response: " + response.getStatusLine());
             System.out.println("Shutting down");
             
             return null;
+        } catch (Exception e) {
+            System.out.println("sadasd");
+            return null;
         } finally {
             httpclient.close();
         }
-        */
-                
+*/
+        /*
         // Validate
         
         // Tracing
@@ -605,12 +724,10 @@ public class AffinityGroupOperationsImpl implements ServiceOperations<Management
         try {
             KeyStoreCredential keyStoreCredential = this.getClient().getCredentials().getKeyStoreCredential();
             SSLContext sslcontext = SSLContextFactory.create(keyStoreCredential);
-
             httpClient = HttpAsyncClients.custom()
                 .setSSLContext(sslcontext)
                 .build();
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
 
@@ -724,6 +841,7 @@ public class AffinityGroupOperationsImpl implements ServiceOperations<Management
                 httpClient.close();
             }
         }
+        */
     }
     
     /**

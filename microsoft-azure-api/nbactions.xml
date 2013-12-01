@@ -25,9 +25,9 @@
             </goals>
             <properties>
                 
-                <Env.AZURE_SUBSCRIPTION_ID>279b0675-cf67-467f-98f0-67ae31eb540f</Env.AZURE_SUBSCRIPTION_ID>
-                <Env.AZURE_MANAGEMENT_KEYSTORE_PATH>/Users/andrerod/workspace/azure-sdk-for-java/azure-cert.jks</Env.AZURE_MANAGEMENT_KEYSTORE_PATH>
-                <Env.AZURE_MANAGEMENT_KEYSTORE_PASSWORD>AzureRocks!12</Env.AZURE_MANAGEMENT_KEYSTORE_PASSWORD>
+                <Env.AZURE_SUBSCRIPTION_ID>db1ab6f0-4769-4b27-930e-01e2ef9c123c</Env.AZURE_SUBSCRIPTION_ID>
+                <Env.AZURE_MANAGEMENT_KEYSTORE_PATH>/Users/andrerod/workspace/certificates/WAKeyStore.jks</Env.AZURE_MANAGEMENT_KEYSTORE_PATH>
+                <Env.AZURE_MANAGEMENT_KEYSTORE_PASSWORD>test123</Env.AZURE_MANAGEMENT_KEYSTORE_PASSWORD>
                 
                 
                 <test>${packageClassName}</test>

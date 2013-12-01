@@ -23,10 +23,12 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 
-import javax.net.ssl.HttpsURLConnection;
+import java.security.cert.X509Certificate;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * A factory for creating SSLContext instance.
@@ -82,8 +84,23 @@ public class SSLContextFactory {
         InputStream keyStoreInputStream = new FileInputStream(new File(keyStorePath));
         KeyManager[] keyManagers = getKeyManagers(keyStoreInputStream, keyStorePassword, keyStoreType);
         SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(keyManagers, null, new SecureRandom());
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+        sslContext.init(keyManagers, new TrustManager[] { new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                            System.out.println("getAcceptedIssuers =============");
+                            return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs,
+                                    String authType) {
+                            System.out.println("checkClientTrusted =============");
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs,
+                                    String authType) {
+                            System.out.println("checkServerTrusted =============");
+                    }
+        } }, new SecureRandom());
+        
         keyStoreInputStream.close();
         return sslContext;
     }
@@ -108,7 +125,8 @@ public class SSLContextFactory {
 
         KeyStore keyStore = KeyStore.getInstance(keyStoreType.name());
         keyStore.load(keyStoreInputStream, keyStorePassword.toCharArray());
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        String defaultAlgorithm = KeyManagerFactory.getDefaultAlgorithm();
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(defaultAlgorithm);
         keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
 
         return keyManagerFactory.getKeyManagers();
